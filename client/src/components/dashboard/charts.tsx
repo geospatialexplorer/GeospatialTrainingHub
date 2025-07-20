@@ -90,21 +90,21 @@ export default function Charts({ stats, loading }: ChartsProps) {
 
   if (loading || !stats) {
     return (
-      <div className="grid lg:grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
         <Card className="animate-pulse">
-          <CardHeader>
+          <CardHeader className="pb-2 sm:pb-3">
             <CardTitle>Registration Trends</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80 bg-slate-200 rounded"></div>
+            <div className="h-60 sm:h-72 lg:h-80 bg-slate-200 rounded"></div>
           </CardContent>
         </Card>
         <Card className="animate-pulse">
-          <CardHeader>
+          <CardHeader className="pb-2 sm:pb-3">
             <CardTitle>Course Popularity</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80 bg-slate-200 rounded"></div>
+            <div className="h-60 sm:h-72 lg:h-80 bg-slate-200 rounded"></div>
           </CardContent>
         </Card>
       </div>
@@ -112,24 +112,24 @@ export default function Charts({ stats, loading }: ChartsProps) {
   }
 
   return (
-    <div className="grid lg:grid-cols-2 gap-8 mb-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
       <Card className="shadow-lg border border-slate-200">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-slate-900">Registration Trends</CardTitle>
+        <CardHeader className="pb-2 sm:pb-3">
+          <CardTitle className="text-base sm:text-lg font-semibold text-slate-900">Registration Trends</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-80">
+          <div className="h-60 sm:h-72 lg:h-80">
             <canvas ref={registrationChartRef}></canvas>
           </div>
         </CardContent>
       </Card>
 
       <Card className="shadow-lg border border-slate-200">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-slate-900">Course Popularity</CardTitle>
+        <CardHeader className="pb-2 sm:pb-3">
+          <CardTitle className="text-base sm:text-lg font-semibold text-slate-900">Course Popularity</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-80">
+          <div className="h-60 sm:h-72 lg:h-80">
             <canvas ref={courseChartRef}></canvas>
           </div>
         </CardContent>

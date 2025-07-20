@@ -103,14 +103,15 @@ export default function RegistrationsTable({ registrations, loading }: Registrat
   return (
     <Card className="shadow-lg border border-slate-200">
       <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-lg font-semibold text-slate-900">Recent Registrations</CardTitle>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <CardTitle className="text-base sm:text-lg font-semibold text-slate-900">Recent Registrations</CardTitle>
           <Button
             onClick={handleExport}
-            className="bg-primary text-white hover:bg-primary-700"
+            className="bg-primary text-white hover:bg-primary-700 w-full sm:w-auto"
+            size="sm"
             disabled={!registrations || registrations.length === 0}
           >
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
             Export
           </Button>
         </div>
@@ -121,73 +122,136 @@ export default function RegistrationsTable({ registrations, loading }: Registrat
             No registrations found.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Course</TableHead>
-                  <TableHead>Registration Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {registrations.map((registration) => (
-                  <TableRow key={registration.id}>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center mr-3">
-                          <span className="text-primary-600 font-medium text-sm">
-                            {getInitials(registration.firstName, registration.lastName)}
-                          </span>
+          <>
+            {/* Mobile Cards View */}
+            <div className="block lg:hidden space-y-4">
+              {registrations.map((registration) => (
+                <div key={registration.id} className="border border-slate-200 rounded-lg p-4 bg-white">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center flex-1 min-w-0">
+                      <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center mr-3 flex-shrink-0">
+                        <span className="text-primary-600 font-medium text-xs">
+                          {getInitials(registration.firstName, registration.lastName)}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-slate-900 text-sm truncate">
+                          {registration.firstName} {registration.lastName}
                         </div>
-                        <div>
-                          <div className="font-medium text-slate-900">
-                            {registration.firstName} {registration.lastName}
-                          </div>
-                          <div className="text-sm text-slate-500">
-                            {registration.email}
-                          </div>
+                        <div className="text-xs text-slate-500 truncate">
+                          {registration.email}
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm text-slate-900">{registration.courseId}</div>
-                      <div className="text-sm text-slate-500 capitalize">{registration.experienceLevel}</div>
-                    </TableCell>
-                    <TableCell className="text-sm text-slate-500">
-                      {new Date(registration.registrationDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={`${getStatusColor(registration.status)} hover:${getStatusColor(registration.status)}`}>
-                        {registration.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button size="sm" variant="ghost" className="text-primary hover:text-primary-700">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          className="text-amber-600 hover:text-amber-700"
-                          onClick={() => {
-                            const newStatus = registration.status === "pending" ? "confirmed" : "pending";
-                            handleStatusChange(registration.id, newStatus);
-                          }}
-                          disabled={updateStatusMutation.isPending}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                    </div>
+                    <Badge className={`${getStatusColor(registration.status)} text-xs ml-2 flex-shrink-0`}>
+                      {registration.status}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-xs mb-3">
+                    <div>
+                      <span className="text-slate-500">Course:</span>
+                      <div className="font-medium text-slate-900 truncate">{registration.courseId}</div>
+                      <div className="text-slate-500 capitalize">{registration.experienceLevel}</div>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">Date:</span>
+                      <div className="font-medium text-slate-900">
+                        {new Date(registration.registrationDate).toLocaleDateString()}
                       </div>
-                    </TableCell>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button size="sm" variant="ghost" className="text-primary hover:text-primary-700 flex-1">
+                      <Eye className="h-3 w-3 mr-1" />
+                      View
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="text-amber-600 hover:text-amber-700 flex-1"
+                      onClick={() => {
+                        const newStatus = registration.status === "pending" ? "confirmed" : "pending";
+                        handleStatusChange(registration.id, newStatus);
+                      }}
+                      disabled={updateStatusMutation.isPending}
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Student</TableHead>
+                    <TableHead>Course</TableHead>
+                    <TableHead>Registration Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {registrations.map((registration) => (
+                    <TableRow key={registration.id}>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center mr-3">
+                            <span className="text-primary-600 font-medium text-sm">
+                              {getInitials(registration.firstName, registration.lastName)}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="font-medium text-slate-900">
+                              {registration.firstName} {registration.lastName}
+                            </div>
+                            <div className="text-sm text-slate-500">
+                              {registration.email}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-slate-900">{registration.courseId}</div>
+                        <div className="text-sm text-slate-500 capitalize">{registration.experienceLevel}</div>
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-500">
+                        {new Date(registration.registrationDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={`${getStatusColor(registration.status)} hover:${getStatusColor(registration.status)}`}>
+                          {registration.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button size="sm" variant="ghost" className="text-primary hover:text-primary-700">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="text-amber-600 hover:text-amber-700"
+                            onClick={() => {
+                              const newStatus = registration.status === "pending" ? "confirmed" : "pending";
+                              handleStatusChange(registration.id, newStatus);
+                            }}
+                            disabled={updateStatusMutation.isPending}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </CardContent>
     </Card>

@@ -17,11 +17,11 @@ interface StatsCardsProps {
 export default function StatsCards({ stats, loading }: StatsCardsProps) {
   if (loading || !stats) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="animate-pulse">
-            <CardContent className="p-6">
-              <div className="h-16 bg-slate-200 rounded"></div>
+            <CardContent className="p-4 sm:p-6">
+              <div className="h-12 sm:h-16 bg-slate-200 rounded"></div>
             </CardContent>
           </Card>
         ))}
@@ -65,23 +65,23 @@ export default function StatsCards({ stats, loading }: StatsCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (
-          <Card key={index} className="shadow-lg border border-slate-200">
-            <CardContent className="p-6">
+          <Card key={index} className="shadow-lg border border-slate-200 h-full">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">{card.title}</p>
-                  <p className="text-3xl font-bold text-slate-900">{card.value}</p>
-                  <p className="text-sm text-green-600 mt-1">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-slate-600 truncate">{card.title}</p>
+                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900">{card.value}</p>
+                  <p className="text-xs sm:text-sm text-green-600 mt-1 truncate">
                     <ArrowUp className="inline h-3 w-3 mr-1" />
                     {card.change}
                   </p>
                 </div>
-                <div className={`${card.bgColor} rounded-lg p-3`}>
-                  <Icon className={`${card.iconColor} h-6 w-6`} />
+                <div className={`${card.bgColor} rounded-lg p-2 sm:p-3 flex-shrink-0 ml-2`}>
+                  <Icon className={`${card.iconColor} h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6`} />
                 </div>
               </div>
             </CardContent>

@@ -50,21 +50,21 @@ export default function ContactSection() {
   };
 
   return (
-    <section id="contact" className="py-20 bg-slate-50">
+    <section id="contact" className="py-12 sm:py-16 lg:py-20 bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4 sm:mb-6">
             Get in Touch
           </h2>
-          <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-3xl mx-auto">
             Have questions about our courses or need guidance on your geospatial career path? We're here to help.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Contact Form */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h3 className="text-2xl font-bold text-slate-900 mb-6">Send us a Message</h3>
+          <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 sm:mb-6">Send us a Message</h3>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
@@ -152,63 +152,63 @@ export default function ContactSection() {
           </div>
 
           {/* Contact Information */}
-          <div className="space-y-8">
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <h3 className="text-2xl font-bold text-slate-900 mb-6">Contact Information</h3>
-              <div className="space-y-6">
+          <div className="space-y-6 sm:space-y-8">
+            <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 sm:mb-6">Contact Information</h3>
+              <div className="space-y-4 sm:space-y-6">
                 <div className="flex items-start">
-                  <div className="bg-primary-100 rounded-lg p-3 mr-4">
-                    <MapPin className="text-primary h-5 w-5" />
+                  <div className="bg-primary-100 rounded-lg p-2 sm:p-3 mr-3 sm:mr-4 flex-shrink-0">
+                    <MapPin className="text-primary h-4 w-4 sm:h-5 sm:w-5" />
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-slate-900 mb-1">Office Address</h4>
-                    <p className="text-slate-600">123 GeoSpatial Way<br />Tech District, CA 94105<br />United States</p>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-semibold text-slate-900 mb-1 text-sm sm:text-base">Office Address</h4>
+                    <p className="text-slate-600 text-sm sm:text-base">123 GeoSpatial Way<br />Tech District, CA 94105<br />United States</p>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <div className="bg-primary-100 rounded-lg p-3 mr-4">
-                    <Phone className="text-primary h-5 w-5" />
+                  <div className="bg-primary-100 rounded-lg p-2 sm:p-3 mr-3 sm:mr-4 flex-shrink-0">
+                    <Phone className="text-primary h-4 w-4 sm:h-5 sm:w-5" />
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-slate-900 mb-1">Phone Number</h4>
-                    <p className="text-slate-600">+1 (555) 123-4567</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="bg-primary-100 rounded-lg p-3 mr-4">
-                    <Mail className="text-primary h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-slate-900 mb-1">Email Address</h4>
-                    <p className="text-slate-600">info@geospatialacademy.com</p>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-semibold text-slate-900 mb-1 text-sm sm:text-base">Phone Number</h4>
+                    <p className="text-slate-600 text-sm sm:text-base">+1 (555) 123-4567</p>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <div className="bg-primary-100 rounded-lg p-3 mr-4">
-                    <Clock className="text-primary h-5 w-5" />
+                  <div className="bg-primary-100 rounded-lg p-2 sm:p-3 mr-3 sm:mr-4 flex-shrink-0">
+                    <Mail className="text-primary h-4 w-4 sm:h-5 sm:w-5" />
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-slate-900 mb-1">Office Hours</h4>
-                    <p className="text-slate-600">Monday - Friday: 9:00 AM - 6:00 PM<br />Saturday: 10:00 AM - 4:00 PM</p>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-semibold text-slate-900 mb-1 text-sm sm:text-base">Email Address</h4>
+                    <p className="text-slate-600 text-sm sm:text-base break-all">info@geospatialacademy.com</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <div className="bg-primary-100 rounded-lg p-2 sm:p-3 mr-3 sm:mr-4 flex-shrink-0">
+                    <Clock className="text-primary h-4 w-4 sm:h-5 sm:w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-semibold text-slate-900 mb-1 text-sm sm:text-base">Office Hours</h4>
+                    <p className="text-slate-600 text-sm sm:text-base">Monday - Friday: 9:00 AM - 6:00 PM<br />Saturday: 10:00 AM - 4:00 PM</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <h3 className="text-2xl font-bold text-slate-900 mb-6">Follow Us</h3>
-              <div className="flex space-x-4">
-                <a href="#" className="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-colors">
-                  <i className="fab fa-linkedin-in"></i>
+            <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 sm:mb-6">Follow Us</h3>
+              <div className="flex flex-wrap gap-3 sm:gap-4">
+                <a href="#" className="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0">
+                  <i className="fab fa-linkedin-in text-sm sm:text-base"></i>
                 </a>
-                <a href="#" className="bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-colors">
-                  <i className="fab fa-twitter"></i>
+                <a href="#" className="bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-colors flex-shrink-0">
+                  <i className="fab fa-twitter text-sm sm:text-base"></i>
                 </a>
-                <a href="#" className="bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transition-colors">
-                  <i className="fab fa-youtube"></i>
+                <a href="#" className="bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transition-colors flex-shrink-0">
+                  <i className="fab fa-youtube text-sm sm:text-base"></i>
                 </a>
-                <a href="#" className="bg-gray-800 text-white p-3 rounded-lg hover:bg-gray-900 transition-colors">
-                  <i className="fab fa-github"></i>
+                <a href="#" className="bg-gray-800 text-white p-3 rounded-lg hover:bg-gray-900 transition-colors flex-shrink-0">
+                  <i className="fab fa-github text-sm sm:text-base"></i>
                 </a>
               </div>
             </div>

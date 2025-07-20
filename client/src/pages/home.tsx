@@ -19,34 +19,34 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 w-full overflow-x-hidden">
       <Navbar 
         onShowRegistration={() => setShowRegistrationModal(true)}
         onShowAdminLogin={() => setShowAdminLoginModal(true)}
       />
       
-      <main>
+      <main className="w-full">
         <HeroSection onShowRegistration={() => setShowRegistrationModal(true)} />
         
         {/* Stats Section */}
-        <section className="bg-white py-16">
+        <section className="bg-white py-12 sm:py-16 lg:py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <div className="text-3xl lg:text-4xl font-bold text-primary mb-2">2,500+</div>
-                <div className="text-slate-600">Students Trained</div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+              <div className="text-center p-4">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-2">2,500+</div>
+                <div className="text-sm sm:text-base text-slate-600">Students Trained</div>
               </div>
-              <div className="text-center">
-                <div className="text-3xl lg:text-4xl font-bold text-primary mb-2">50+</div>
-                <div className="text-slate-600">Expert Courses</div>
+              <div className="text-center p-4">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-2">50+</div>
+                <div className="text-sm sm:text-base text-slate-600">Expert Courses</div>
               </div>
-              <div className="text-center">
-                <div className="text-3xl lg:text-4xl font-bold text-primary mb-2">25+</div>
-                <div className="text-slate-600">Expert Instructors</div>
+              <div className="text-center p-4">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-2">25+</div>
+                <div className="text-sm sm:text-base text-slate-600">Expert Instructors</div>
               </div>
-              <div className="text-center">
-                <div className="text-3xl lg:text-4xl font-bold text-primary mb-2">98%</div>
-                <div className="text-slate-600">Satisfaction Rate</div>
+              <div className="text-center p-4">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-2">98%</div>
+                <div className="text-sm sm:text-base text-slate-600">Satisfaction Rate</div>
               </div>
             </div>
           </div>
