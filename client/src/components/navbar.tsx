@@ -7,7 +7,10 @@ interface NavbarProps {
   onShowAdminLogin: () => void;
 }
 
-export default function Navbar({ onShowRegistration, onShowAdminLogin }: NavbarProps) {
+export default function Navbar({
+  onShowRegistration,
+  onShowAdminLogin,
+}: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const scrollToSection = (id: string) => {
@@ -25,45 +28,47 @@ export default function Navbar({ onShowRegistration, onShowAdminLogin }: NavbarP
           <div className="flex items-center min-w-0">
             <div className="flex-shrink-0 flex items-center">
               <Globe className="text-primary text-xl sm:text-2xl mr-2 flex-shrink-0" />
-              <span className="font-bold text-lg sm:text-xl text-slate-900 truncate">GeoSpatial Academy</span>
+              <span className="font-bold text-lg sm:text-xl text-slate-900 truncate">
+                GeoXpatia
+              </span>
             </div>
           </div>
-          
+
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-6 xl:space-x-8">
-            <button 
+            <button
               onClick={() => scrollToSection("home")}
               className="text-primary font-medium border-b-2 border-primary pb-1 whitespace-nowrap"
             >
               Home
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection("about")}
               className="text-slate-600 hover:text-primary transition-colors whitespace-nowrap"
             >
               About
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection("courses")}
               className="text-slate-600 hover:text-primary transition-colors whitespace-nowrap"
             >
               Courses
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection("contact")}
               className="text-slate-600 hover:text-primary transition-colors whitespace-nowrap"
             >
               Contact
             </button>
-            <Button 
-              onClick={onShowRegistration} 
+            <Button
+              onClick={onShowRegistration}
               className="bg-primary text-white hover:bg-primary-700 whitespace-nowrap"
               size="sm"
             >
               Register
             </Button>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={onShowAdminLogin}
               className="text-slate-600 hover:text-primary whitespace-nowrap"
               size="sm"
@@ -75,15 +80,15 @@ export default function Navbar({ onShowRegistration, onShowAdminLogin }: NavbarP
 
           {/* Tablet Navigation */}
           <div className="hidden md:flex lg:hidden items-center space-x-3">
-            <Button 
-              onClick={onShowRegistration} 
+            <Button
+              onClick={onShowRegistration}
               className="bg-primary text-white hover:bg-primary-700"
               size="sm"
             >
               Register
             </Button>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={onShowAdminLogin}
               className="text-slate-600 hover:text-primary"
               size="sm"
@@ -118,32 +123,32 @@ export default function Navbar({ onShowRegistration, onShowAdminLogin }: NavbarP
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white border-t border-slate-200 shadow-lg">
           <div className="px-4 py-3 space-y-2">
-            <button 
+            <button
               onClick={() => scrollToSection("home")}
               className="block w-full text-left px-3 py-3 text-primary font-medium rounded-lg hover:bg-primary-50 transition-colors"
             >
               Home
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection("about")}
               className="block w-full text-left px-3 py-3 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
             >
               About
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection("courses")}
               className="block w-full text-left px-3 py-3 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
             >
               Courses
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection("contact")}
               className="block w-full text-left px-3 py-3 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
             >
               Contact
             </button>
             <div className="pt-2 border-t border-slate-200 space-y-2">
-              <button 
+              <button
                 onClick={() => {
                   onShowRegistration();
                   setIsMobileMenuOpen(false);
@@ -152,7 +157,7 @@ export default function Navbar({ onShowRegistration, onShowAdminLogin }: NavbarP
               >
                 Register for Courses
               </button>
-              <button 
+              <button
                 onClick={() => {
                   onShowAdminLogin();
                   setIsMobileMenuOpen(false);
