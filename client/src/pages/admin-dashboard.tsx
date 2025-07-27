@@ -26,6 +26,8 @@ export default function AdminDashboard() {
     enabled: !!currentUser,
   });
 
+  console.log(currentUser)
+
   useEffect(() => {
     if (!userLoading && !currentUser) {
       setLocation("/");

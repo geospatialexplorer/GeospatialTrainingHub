@@ -24,12 +24,13 @@ export default function CourseCard({ course, onEnroll }: CourseCardProps) {
         return "bg-slate-100 text-slate-600";
     }
   };
+  console.log(course,'course')
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-slate-200 hover:shadow-xl transition-shadow duration-300 card-hover flex flex-col h-full">
-      {course.imageUrl && (
+      {course.image_url && (
         <img 
-          src={course.imageUrl} 
+          src={course.image_url}
           alt={course.title} 
           className="w-full h-48 object-cover rounded-t-xl flex-shrink-0" 
         />
@@ -39,7 +40,7 @@ export default function CourseCard({ course, onEnroll }: CourseCardProps) {
           <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getLevelColor(course.level)}`}>
             {course.level}
           </span>
-          <span className="text-amber-500 font-semibold text-sm sm:text-base">${course.price}</span>
+          <span className="text-amber-500 font-semibold text-sm sm:text-base">₹{course.price}</span>
         </div>
         <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2 sm:mb-3 line-clamp-2">{course.title}</h3>
         <p className="text-sm sm:text-base text-slate-600 mb-4 flex-grow line-clamp-3">{course.description}</p>
