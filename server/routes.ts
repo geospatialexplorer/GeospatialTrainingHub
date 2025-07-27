@@ -5,6 +5,8 @@ import { insertRegistrationSchema, insertContactMessageSchema } from "@shared/sc
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+
+
   // Authentication middleware
   const requireAuth = (req: any, res: any, next: any) => {
     // Simple session-based auth (in production, use proper JWT or session management)
@@ -68,10 +70,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Registration routes
   app.post("/api/registrations", async (req, res) => {
     try {
+      console.log('📝 Registration request body:', req.body);
+      
       const registrationData = insertRegistrationSchema.parse(req.body);
+      console.log('✅ Registration data validated:', registrationData);
+      
       const registration = await storage.createRegistration(registrationData);
+      console.log('✅ Registration created:', registration);
+      
       res.status(201).json(registration);
     } catch (error) {
+      console.error('❌ Registration error:', error);
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid registration data", errors: error.errors });
       } else {
