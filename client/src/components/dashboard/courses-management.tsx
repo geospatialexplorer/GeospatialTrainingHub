@@ -1,4 +1,10 @@
 import { useState } from "react";
+// Helper to generate a unique course ID from title
+function generateCourseId(title: string) {
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const unique = Date.now().toString().slice(-6); // last 6 digits of timestamp
+  return `${slug}-${unique}`;
+}
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Course, insertCourseSchema } from "@shared/schema";
 import { z } from "zod";
@@ -136,10 +142,14 @@ export default function CoursesManagement() {
   });
 
   const onSubmit = (data: CourseFormValues) => {
+    // Ensure price is always a string
+    const fixedData = { ...data, price: String(data.price) };
     if (editingCourse) {
-      updateCourseMutation.mutate({ id: editingCourse.id, data });
+      updateCourseMutation.mutate({ id: editingCourse.id, data: fixedData });
     } else {
-      createCourseMutation.mutate(data);
+      // Auto-generate unique ID if not provided
+      const id = data.id?.trim() ? data.id : generateCourseId(data.title);
+      createCourseMutation.mutate({ ...fixedData, id });
     }
   };
 

@@ -274,7 +274,10 @@ export class SupabaseStorage implements IStorage {
       .select()
       .single();
     
-    if (error) throw new Error(`Failed to create course: ${error.message}`);
+    if (error) {
+      console.error('Supabase createCourse error:', error);
+      throw new Error(`Failed to create course: ${error.message}`);
+    }
     return data as Course;
   }
 
