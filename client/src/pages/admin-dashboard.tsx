@@ -1,47 +1,54 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { authService } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
+import { Sidebar } from "@/components/dashboard/sidebar";
 import StatsCards from "@/components/dashboard/stats-cards";
 import Charts from "@/components/dashboard/charts";
 import RegistrationsTable from "@/components/dashboard/registrations-table";
-import { ArrowLeft, Globe, LogOut } from "lucide-react";
+import BannersManagement from "@/components/dashboard/banners-management";
+import WebsiteSettings from "@/components/dashboard/website-settings";
+import CoursesManagement from "@/components/dashboard/courses-management";
+import { Registration } from "@shared/schema";
+
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+}
+
+interface DashboardStats {
+  totalRegistrations: number;
+  thisMonthRegistrations: number;
+  activeCourses: number;
+  revenue: number;
+  completionRate: number;
+}
 
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
+  const [currentSection, setCurrentSection] = useState("overview");
   
-  const { data: currentUser, isLoading: userLoading } = useQuery({
+  const { data: currentUser, isLoading: userLoading } = useQuery<User>({
     queryKey: ["/api/admin/me"],
     retry: false,
   });
 
-  const { data: dashboardStats, isLoading: statsLoading } = useQuery({
+  const { data: dashboardStats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
     enabled: !!currentUser,
   });
 
-  const { data: registrations, isLoading: registrationsLoading } = useQuery({
+  const { data: registrations, isLoading: registrationsLoading } = useQuery<Registration[]>({
     queryKey: ["/api/registrations"],
     enabled: !!currentUser,
   });
-
-  console.log(currentUser)
 
   useEffect(() => {
     if (!userLoading && !currentUser) {
       setLocation("/");
     }
   }, [currentUser, userLoading, setLocation]);
-
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-      setLocation("/");
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
 
   if (userLoading) {
     return (
@@ -56,58 +63,78 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 w-full overflow-x-hidden">
-      {/* Dashboard Header */}
-      <header className="bg-white shadow-sm border-b border-slate-200 w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center min-w-0 flex-1">
-              <Globe className="text-primary text-xl sm:text-2xl mr-2 flex-shrink-0" />
-              <span className="font-bold text-lg sm:text-xl text-slate-900 truncate">GeoSpatial Academy</span>
-              <span className="hidden sm:inline-block ml-2 lg:ml-4 px-2 sm:px-3 py-1 bg-primary-100 text-primary-600 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap">
-                Admin Dashboard
-              </span>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <span className="hidden md:inline text-sm sm:text-base text-slate-600 truncate max-w-32 lg:max-w-none">
-                Welcome, {currentUser.username}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="text-slate-600 hover:text-slate-900 flex-shrink-0"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={() => setLocation("/")}
-                className="bg-primary-600 text-white hover:bg-primary-700 flex-shrink-0"
-                size="sm"
-              >
-                <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Back to Website</span>
-              </Button>
-            </div>
+    <div className="flex h-screen bg-slate-50 w-full overflow-hidden">
+      {/* Sidebar */}
+      <Sidebar 
+        username={currentUser?.username} 
+        currentSection={currentSection} 
+        onSectionChange={setCurrentSection} 
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="bg-white shadow-sm border-b border-slate-200 w-full h-16 flex items-center px-4">
+          <div className="md:hidden">
+            {/* Mobile header content is handled by the Sidebar component */}
           </div>
-        </div>
-      </header>
+          <div className="hidden md:block">
+            <span className="px-3 py-1 bg-primary-100 text-primary-600 rounded-full text-sm font-medium">
+              Admin Dashboard
+            </span>
+          </div>
+        </header>
 
-      {/* Dashboard Content */}
-      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <StatsCards stats={dashboardStats} loading={statsLoading} />
-        
-        <div className="mt-6 sm:mt-8">
-          <Charts stats={dashboardStats} loading={statsLoading} />
-        </div>
-
-        <div className="mt-6 sm:mt-8">
-          <RegistrationsTable 
-            registrations={registrations} 
-            loading={registrationsLoading} 
-          />
-        </div>
-      </main>
+        <main className="flex-1 overflow-auto p-4 md:p-6">
+          <div className="max-w-6xl mx-auto">
+            {currentSection === "overview" && (
+              <div className="space-y-6">
+                <h1 className="text-2xl font-bold">Dashboard Overview</h1>
+                <StatsCards stats={dashboardStats} loading={statsLoading} />
+                <div className="mt-6">
+                  <Charts stats={dashboardStats} loading={statsLoading} />
+                </div>
+              </div>
+            )}
+            
+            {currentSection === "registrations" && (
+              <div className="space-y-6">
+                <h1 className="text-2xl font-bold">Course Registrations</h1>
+                <RegistrationsTable 
+                  registrations={registrations} 
+                  loading={registrationsLoading} 
+                />
+              </div>
+            )}
+            
+            {currentSection === "courses" && (
+              <div className="space-y-6">
+                <h1 className="text-2xl font-bold">Course Management</h1>
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                  <CoursesManagement />
+                </div>
+              </div>
+            )}
+            
+            {currentSection === "banners" && (
+              <div className="space-y-6">
+                <h1 className="text-2xl font-bold">Banner Management</h1>
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                  <BannersManagement />
+                </div>
+              </div>
+            )}
+            
+            {currentSection === "settings" && (
+              <div className="space-y-6">
+                <h1 className="text-2xl font-bold">Website Settings</h1>
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                  <WebsiteSettings />
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

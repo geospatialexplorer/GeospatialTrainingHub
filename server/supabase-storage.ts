@@ -4,6 +4,8 @@ import {
   registrations, 
   contactMessages, 
   courses,
+  banners,
+  websiteSettings,
   type User, 
   type InsertUser, 
   type Registration, 
@@ -11,7 +13,11 @@ import {
   type ContactMessage,
   type InsertContactMessage,
   type Course,
-  type InsertCourse
+  type InsertCourse,
+  type Banner,
+  type InsertBanner,
+  type WebsiteSetting,
+  type InsertWebsiteSetting
 } from "@shared/schema";
 import type { IStorage } from './storage';
 
@@ -272,6 +278,27 @@ export class SupabaseStorage implements IStorage {
     return data as Course;
   }
 
+  async updateCourse(id: string, courseData: Partial<InsertCourse>): Promise<Course | undefined> {
+    const { data, error } = await supabase
+      .from('courses')
+      .update(courseData)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error || !data) return undefined;
+    return data as Course;
+  }
+
+  async deleteCourse(id: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('courses')
+      .delete()
+      .eq('id', id);
+    
+    return !error;
+  }
+
   async updateCourseEnrollment(id: string, increment: number): Promise<Course | undefined> {
     // First get current enrollment
     const { data: currentCourse, error: fetchError } = await supabase
@@ -293,4 +320,127 @@ export class SupabaseStorage implements IStorage {
     if (error || !data) return undefined;
     return data as Course;
   }
-} 
+
+  // Banner operations
+  async getBanners(): Promise<Banner[]> {
+    const { data, error } = await supabase
+      .from('banners')
+      .select('*')
+      .order('display_order');
+    
+    if (error) throw new Error(`Failed to fetch banners: ${error.message}`);
+    return data as Banner[];
+  }
+
+  async getBannerById(id: number): Promise<Banner | undefined> {
+    const { data, error } = await supabase
+      .from('banners')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error || !data) return undefined;
+    return data as Banner;
+  }
+
+  async createBanner(banner: InsertBanner): Promise<Banner> {
+    // Map camelCase to snake_case for database columns
+    const dbBanner = {
+      title: banner.title,
+      subtitle: banner.subtitle || null,
+      image_url: banner.imageUrl,
+      link_url: banner.linkUrl || null,
+      link_text: banner.linkText || null,
+      is_active: banner.isActive !== undefined ? banner.isActive : true,
+      display_order: banner.displayOrder || 0
+    };
+
+    const { data, error } = await supabase
+      .from('banners')
+      .insert(dbBanner)
+      .select()
+      .single();
+    
+    if (error) throw new Error(`Failed to create banner: ${error.message}`);
+    return data as Banner;
+  }
+
+  async updateBanner(id: number, banner: Partial<InsertBanner>): Promise<Banner | undefined> {
+    // Map camelCase to snake_case for database columns
+    const dbBanner: Record<string, any> = {};
+    
+    if (banner.title !== undefined) dbBanner.title = banner.title;
+    if (banner.subtitle !== undefined) dbBanner.subtitle = banner.subtitle;
+    if (banner.imageUrl !== undefined) dbBanner.image_url = banner.imageUrl;
+    if (banner.linkUrl !== undefined) dbBanner.link_url = banner.linkUrl;
+    if (banner.linkText !== undefined) dbBanner.link_text = banner.linkText;
+    if (banner.isActive !== undefined) dbBanner.is_active = banner.isActive;
+    if (banner.displayOrder !== undefined) dbBanner.display_order = banner.displayOrder;
+    
+    // Add updated_at timestamp
+    dbBanner.updated_at = new Date();
+
+    const { data, error } = await supabase
+      .from('banners')
+      .update(dbBanner)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error || !data) return undefined;
+    return data as Banner;
+  }
+
+  async deleteBanner(id: number): Promise<boolean> {
+    const { error } = await supabase
+      .from('banners')
+      .delete()
+      .eq('id', id);
+    
+    return !error;
+  }
+
+  // Website settings operations
+  async getWebsiteSettings(): Promise<WebsiteSetting[]> {
+    const { data, error } = await supabase
+      .from('website_settings')
+      .select('*');
+    
+    if (error) throw new Error(`Failed to fetch website settings: ${error.message}`);
+    return data as WebsiteSetting[];
+  }
+
+  async getWebsiteSettingByKey(key: string): Promise<WebsiteSetting | undefined> {
+    const { data, error } = await supabase
+      .from('website_settings')
+      .select('*')
+      .eq('key', key)
+      .single();
+    
+    if (error || !data) return undefined;
+    return data as WebsiteSetting;
+  }
+
+  async createWebsiteSetting(setting: InsertWebsiteSetting): Promise<WebsiteSetting> {
+    const { data, error } = await supabase
+      .from('website_settings')
+      .insert(setting)
+      .select()
+      .single();
+    
+    if (error) throw new Error(`Failed to create website setting: ${error.message}`);
+    return data as WebsiteSetting;
+  }
+
+  async updateWebsiteSetting(key: string, value: string): Promise<WebsiteSetting | undefined> {
+    const { data, error } = await supabase
+      .from('website_settings')
+      .update({ value, updated_at: new Date() })
+      .eq('key', key)
+      .select()
+      .single();
+    
+    if (error || !data) return undefined;
+    return data as WebsiteSetting;
+  }
+}

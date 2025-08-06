@@ -114,6 +114,26 @@ The application creates the following tables:
 - `message` (TEXT)
 - `created_at` (TIMESTAMP)
 
+### `banners`
+- `id` (SERIAL PRIMARY KEY)
+- `title` (VARCHAR(200))
+- `subtitle` (TEXT)
+- `image_url` (TEXT)
+- `link_url` (TEXT)
+- `link_text` (VARCHAR(100))
+- `is_active` (BOOLEAN DEFAULT true)
+- `display_order` (INTEGER DEFAULT 0)
+- `created_at` (TIMESTAMP)
+- `updated_at` (TIMESTAMP)
+
+### `website_settings`
+- `id` (SERIAL PRIMARY KEY)
+- `key` (VARCHAR(100) UNIQUE)
+- `value` (TEXT)
+- `type` (VARCHAR(50))
+- `description` (TEXT)
+- `updated_at` (TIMESTAMP)
+
 ## Troubleshooting
 
 ### Common Issues
@@ -170,4 +190,4 @@ After setting up Supabase:
 3. Implement proper authentication
 4. Add payment processing
 5. Set up email notifications
-6. Add course content management 
+6. Add course content management

@@ -1,8 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertRegistrationSchema, insertContactMessageSchema } from "@shared/schema";
+import { insertRegistrationSchema, insertContactMessageSchema, insertBannerSchema, insertWebsiteSettingSchema, insertCourseSchema } from "@shared/schema";
 import { z } from "zod";
+import { emailService } from "./email-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -78,6 +79,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const registration = await storage.createRegistration(registrationData);
       console.log('✅ Registration created:', registration);
       
+      // Get the course details for the email
+      const course = await storage.getCourseById(registration.courseId);
+      if (course) {
+        // Send confirmation email to the user
+        await emailService.sendAdminNotification(registration, course);
+      }
+      
       res.status(201).json(registration);
     } catch (error) {
       console.error('❌ Registration error:', error);
@@ -106,6 +114,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!registration) {
         return res.status(404).json({ message: "Registration not found" });
+      }
+      
+      // If the status is changed to 'confirmed', send a confirmation email
+      if (status === 'confirmed') {
+        const course = await storage.getCourseById(registration.courseId);
+        if (course) {
+          await emailService.sendRegistrationConfirmation(registration, course);
+        }
       }
       
       res.json(registration);
@@ -159,6 +175,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch course" });
     }
   });
+  
+  app.post("/api/courses", requireAuth, async (req, res) => {
+    try {
+      const courseData = insertCourseSchema.parse(req.body);
+      const course = await storage.createCourse(courseData);
+      res.status(201).json(course);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid course data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create course" });
+      }
+    }
+  });
+
+  app.patch("/api/courses/:id", requireAuth, async (req, res) => {
+    try {
+      const id = req.params.id;
+      const courseData = req.body;
+      const course = await storage.updateCourse(id, courseData);
+      
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+      
+      res.json(course);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update course" });
+    }
+  });
+
+  app.delete("/api/courses/:id", requireAuth, async (req, res) => {
+    try {
+      const id = req.params.id;
+      const success = await storage.deleteCourse(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+      
+      res.json({ message: "Course deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete course" });
+    }
+  });
 
   // Dashboard stats
   app.get("/api/dashboard/stats", requireAuth, async (req, res) => {
@@ -185,6 +246,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // Banner routes
+  app.get("/api/banners", async (req, res) => {
+    try {
+      const banners = await storage.getBanners();
+      // If not admin, only return active banners
+      if (req.session?.user?.role !== 'admin') {
+        return res.json(banners.filter(banner => banner.isActive));
+      }
+      res.json(banners);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch banners" });
+    }
+  });
+
+  app.get("/api/banners/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const banner = await storage.getBannerById(id);
+      if (!banner) {
+        return res.status(404).json({ message: "Banner not found" });
+      }
+      res.json(banner);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch banner" });
+    }
+  });
+
+  app.post("/api/banners", requireAuth, async (req, res) => {
+    try {
+      const bannerData = insertBannerSchema.parse(req.body);
+      const banner = await storage.createBanner(bannerData);
+      res.status(201).json(banner);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid banner data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create banner" });
+      }
+    }
+  });
+
+  app.patch("/api/banners/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const bannerData = req.body;
+      const banner = await storage.updateBanner(id, bannerData);
+      
+      if (!banner) {
+        return res.status(404).json({ message: "Banner not found" });
+      }
+      
+      res.json(banner);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update banner" });
+    }
+  });
+
+  app.delete("/api/banners/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteBanner(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Banner not found" });
+      }
+      
+      res.json({ message: "Banner deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete banner" });
+    }
+  });
+
+  // Website settings routes
+  app.get("/api/website-settings", async (req, res) => {
+    try {
+      const settings = await storage.getWebsiteSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch website settings" });
+    }
+  });
+
+  app.get("/api/website-settings/:key", async (req, res) => {
+    try {
+      const setting = await storage.getWebsiteSettingByKey(req.params.key);
+      if (!setting) {
+        return res.status(404).json({ message: "Setting not found" });
+      }
+      res.json(setting);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch setting" });
+    }
+  });
+
+  app.post("/api/website-settings", requireAuth, async (req, res) => {
+    try {
+      const settingData = insertWebsiteSettingSchema.parse(req.body);
+      const setting = await storage.createWebsiteSetting(settingData);
+      res.status(201).json(setting);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid setting data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create setting" });
+      }
+    }
+  });
+
+  app.patch("/api/website-settings/:key", requireAuth, async (req, res) => {
+    try {
+      const { value } = req.body;
+      if (value === undefined) {
+        return res.status(400).json({ message: "Value is required" });
+      }
+      
+      const setting = await storage.updateWebsiteSetting(req.params.key, value);
+      
+      if (!setting) {
+        return res.status(404).json({ message: "Setting not found" });
+      }
+      
+      res.json(setting);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update setting" });
     }
   });
 

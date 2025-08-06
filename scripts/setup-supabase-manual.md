@@ -60,6 +60,30 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   message TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
+
+-- Create banners table
+CREATE TABLE IF NOT EXISTS banners (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  subtitle TEXT,
+  image_url TEXT NOT NULL,
+  link_url TEXT,
+  link_text VARCHAR(100),
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
+
+-- Create website_settings table
+CREATE TABLE IF NOT EXISTS website_settings (
+  id SERIAL PRIMARY KEY,
+  key VARCHAR(100) NOT NULL UNIQUE,
+  value TEXT NOT NULL,
+  type VARCHAR(50) NOT NULL,
+  description TEXT,
+  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
 ```
 
 Click **Run** to execute the SQL.
@@ -83,6 +107,26 @@ INSERT INTO courses (id, title, description, level, duration, price, enrolled, i
 ('drone-surveying', 'Drone Surveying & Photogrammetry', 'Master UAV data collection, photogrammetry, and drone-based mapping for professional surveying.', 'Specialized', '45 hours', 549.00, 142, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300'),
 ('web-gis', 'Web GIS & Location Services', 'Build interactive web maps and location-based applications using modern web technologies and APIs.', 'Professional', '55 hours', 499.00, 201, 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300')
 ON CONFLICT (id) DO NOTHING;
+
+-- Insert sample banners
+INSERT INTO banners (title, subtitle, image_url, link_url, link_text, is_active, display_order) VALUES
+('Welcome to Geospatial Training Hub', 'Your journey to GIS mastery starts here', 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400', '#courses', 'Explore Courses', true, 1),
+('New Course: Python for Geospatial Analysis', 'Learn how to automate GIS workflows with Python', 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400', '/courses/python-gis', 'Learn More', true, 2),
+('Join Our Community', 'Connect with other GIS professionals', 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400', '#contact', 'Contact Us', true, 3);
+
+-- Insert default website settings
+INSERT INTO website_settings (key, value, type, description) VALUES
+('site_title', 'Geospatial Training Hub', 'string', 'Website title displayed in browser tab'),
+('site_description', 'Professional training for GIS and geospatial technologies', 'string', 'Meta description for SEO'),
+('contact_email', 'info@geospatialtraininghub.com', 'string', 'Primary contact email'),
+('contact_phone', '+1 (555) 123-4567', 'string', 'Primary contact phone number'),
+('social_facebook', 'https://facebook.com/geospatialtraininghub', 'string', 'Facebook page URL'),
+('social_twitter', 'https://twitter.com/geospatialtraining', 'string', 'Twitter profile URL'),
+('social_linkedin', 'https://linkedin.com/company/geospatialtraininghub', 'string', 'LinkedIn company page URL'),
+('enable_banner_carousel', 'true', 'boolean', 'Enable or disable the banner carousel on homepage'),
+('banner_autoplay', 'true', 'boolean', 'Enable or disable autoplay for banner carousel'),
+('banner_interval', '5000', 'number', 'Time interval between banner slides in milliseconds')
+ON CONFLICT (key) DO NOTHING;
 ```
 
 Click **Run** to execute the SQL.
@@ -90,7 +134,7 @@ Click **Run** to execute the SQL.
 ## Step 4: Verify Setup
 
 1. Go to **Table Editor** in the left sidebar
-2. You should see 4 tables: `users`, `courses`, `registrations`, and `contact_messages`
+2. You should see 6 tables: `users`, `courses`, `registrations`, `contact_messages`, `banners`, and `website_settings`
 3. Click on each table to verify the data was inserted correctly
 
 ## Step 5: Test Your Application
@@ -117,4 +161,4 @@ After manual setup:
 1. Test all application features
 2. Add more sample data if needed
 3. Customize the courses and content
-4. Set up Row Level Security (RLS) for production use 
+4. Set up Row Level Security (RLS) for production use
