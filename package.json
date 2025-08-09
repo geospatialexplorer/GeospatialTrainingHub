@@ -51,7 +51,6 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "connect-pg-simple": "^10.0.0",
-    "cross-env": "^10.0.0",
     "date-fns": "^3.6.0",
     "dotenv": "^17.2.1",
     "drizzle-orm": "^0.39.3",
@@ -100,8 +99,14 @@
     "@types/ws": "^8.5.13",
     "@vitejs/plugin-react": "^4.3.2",
     "autoprefixer": "^10.4.20",
+<<<<<<< Updated upstream
     "drizzle-kit": "^0.31.4",
     "esbuild": "^0.25.8",
+=======
+    "cross-env": "^10.0.0",
+    "drizzle-kit": "^0.18.1",
+    "esbuild": "^0.25.0",
+>>>>>>> Stashed changes
     "nodemon": "^3.1.10",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.17",
