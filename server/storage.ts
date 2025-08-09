@@ -330,18 +330,21 @@ export class MemStorage implements IStorage {
     return newCourse;
   }
 
-  async updateCourse(id: string, courseData: Partial<InsertCourse>): Promise<Course | undefined> {
-    const existingCourse = this.courses.get(id);
-    if (existingCourse) {
-      const updatedCourse: Course = {
-        ...existingCourse,
-        ...courseData,
-      };
-      this.courses.set(id, updatedCourse);
-      return updatedCourse;
-    }
-    return undefined;
-  }
+async updateCourse(id: string, courseData: Partial<InsertCourse>): Promise<{ course?: Course; error?: any }> {
+  const { data, error } = await supabase
+    .from('courses')
+    .update(courseData)
+    .eq('slug', id) // or 'id' if you're matching ID
+    .select()
+    .single();
+
+  if (error) return { error };
+  if (!data) return { error: "No course found matching the given identifier" };
+
+  return { course: data as Course };
+}
+
+
 
   async deleteCourse(id: string): Promise<boolean> {
     return this.courses.delete(id);

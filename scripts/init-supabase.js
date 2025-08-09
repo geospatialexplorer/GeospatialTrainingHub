@@ -24,14 +24,13 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
 
--- Create courses table
 CREATE TABLE IF NOT EXISTS courses (
   id VARCHAR(100) PRIMARY KEY,
   title VARCHAR(200) NOT NULL,
   description TEXT NOT NULL,
   level VARCHAR(50) NOT NULL,
   duration VARCHAR(50) NOT NULL,
-  price DECIMAL(10,2) NOT NULL,
+  price VARCHAR(50) NOT NULL,
   enrolled INTEGER NOT NULL DEFAULT 0,
   image_url TEXT
 );
@@ -91,7 +90,7 @@ CREATE TABLE IF NOT EXISTS website_settings (
 // Sample data
 const sampleCourses = [
   {
-    id: "gis-fundamentals",
+    id: "101",
     title: "GIS Fundamentals & ESRI ArcGIS",
     description: "Master the basics of Geographic Information Systems using industry-standard ESRI ArcGIS software. Perfect for beginners.",
     level: "Beginner",
@@ -101,7 +100,7 @@ const sampleCourses = [
     image_url: "https://pixabay.com/get/g5f7f3b1fbad579eed5df651b5a1122caaea2ed21d4488ecdef7bf626211fbfd07d5876e3afe23548a2550a0e93b93c72_1280.jpg"
   },
   {
-    id: "remote-sensing",
+    id: "102",
     title: "Remote Sensing & Image Analysis",
     description: "Learn advanced satellite image processing, spectral analysis, and environmental monitoring techniques.",
     level: "Intermediate",
@@ -111,7 +110,7 @@ const sampleCourses = [
     image_url: "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300"
   },
   {
-    id: "spatial-analysis",
+    id: "103",
     title: "Advanced Spatial Analysis & Modeling",
     description: "Master complex spatial analysis, 3D modeling, and predictive analytics for professional GIS applications.",
     level: "Advanced",
@@ -121,7 +120,7 @@ const sampleCourses = [
     image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300"
   },
   {
-    id: "python-gis",
+    id: "104",
     title: "Python for Geospatial Analysis",
     description: "Learn Python programming for GIS automation, data processing, and custom geospatial applications.",
     level: "Intermediate",
@@ -131,7 +130,7 @@ const sampleCourses = [
     image_url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300"
   },
   {
-    id: "drone-surveying",
+    id: "105",
     title: "Drone Surveying & Photogrammetry",
     description: "Master UAV data collection, photogrammetry, and drone-based mapping for professional surveying.",
     level: "Specialized",
@@ -141,7 +140,7 @@ const sampleCourses = [
     image_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300"
   },
   {
-    id: "web-gis",
+    id: "106",
     title: "Web GIS & Location Services",
     description: "Build interactive web maps and location-based applications using modern web technologies and APIs.",
     level: "Professional",

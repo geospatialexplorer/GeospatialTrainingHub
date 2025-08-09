@@ -25,14 +25,18 @@ export default function Navbar({
     <nav className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50 w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center min-w-0">
-            <div className="flex-shrink-0 flex items-center">
-              <Globe className="text-primary text-xl sm:text-2xl mr-2 flex-shrink-0" />
-              <span className="font-bold text-lg sm:text-xl text-slate-900 truncate">
-                GeoXpatia
-              </span>
-            </div>
-          </div>
+        <div className="flex items-center min-w-0">
+  <div className="flex-shrink-0 flex items-center">
+    <img
+      src="https://i.postimg.cc/B6kxB0d0/Fusion-Xpatial-Logo-Final.jpg"
+      alt="GeoXpatia Logo"
+      className="h-[80px] w-[80px] mr-4 object-contain"
+    />
+  </div>
+</div>
+
+
+
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-6 xl:space-x-8">

@@ -436,7 +436,22 @@ function CourseForm({ form, onSubmit, isEditing = false }: CourseFormProps) {
             <FormItem>
               <FormLabel>Image URL</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="URL to course image" />
+                <div className="space-y-2">
+                  <Input {...field} placeholder="URL to course image" />
+                  {field.value && (
+                    <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-gray-200">
+                      <img
+                        src={field.value}
+                        alt="Course preview"
+                        className="object-cover w-full h-full"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder-image.jpg';
+                          e.currentTarget.alt = 'Failed to load image';
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>

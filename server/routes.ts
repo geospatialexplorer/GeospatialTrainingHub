@@ -190,21 +190,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/courses/:id", requireAuth, async (req, res) => {
-    try {
-      const id = req.params.id;
-      const courseData = req.body;
-      const course = await storage.updateCourse(id, courseData);
-      
-      if (!course) {
-        return res.status(404).json({ message: "Course not found" });
-      }
-      
-      res.json(course);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update course" });
+app.patch("/api/courses/:id", requireAuth, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { id: _remove, ...updateData } = req.body; // remove id from payload
+
+    const { course, error } = await storage.updateCourse(id, updateData);
+
+    if (error) {
+      return res.status(400).json({
+        message: "Failed to update course",
+        reason: error.message || error
+      });
     }
-  });
+
+    res.json(course);
+  } catch (error) {
+    console.error("Update course error:", error);
+    res.status(500).json({ message: "Unexpected server error", reason: error.message });
+  }
+});
 
   app.delete("/api/courses/:id", requireAuth, async (req, res) => {
     try {

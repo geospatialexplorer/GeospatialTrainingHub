@@ -268,60 +268,57 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createCourse(course: InsertCourse): Promise<Course> {
+    // Map camelCase to snake_case for DB
+    const dbCourse = {
+      ...course,
+      image_url: course.imageUrl,
+    };
+    delete dbCourse.imageUrl;
     const { data, error } = await supabase
       .from('courses')
-      .insert(course)
+      .insert(dbCourse)
       .select()
       .single();
-    
-    if (error) {
+    if (error || !data) {
       console.error('Supabase createCourse error:', error);
-      throw new Error(`Failed to create course: ${error.message}`);
+      throw new Error(`Failed to create course: ${error?.message || 'Unknown error'}`);
     }
     return data as Course;
   }
 
-  async updateCourse(id: string, courseData: Partial<InsertCourse>): Promise<Course | undefined> {
+  async updateCourse(courseId: string, course: Partial<InsertCourse>): Promise<Course | undefined> {
+    // Map camelCase to snake_case for DB
+    const dbCourse = {
+      ...course,
+      image_url: course.imageUrl,
+    };
+    delete dbCourse.imageUrl;
+
     const { data, error } = await supabase
       .from('courses')
-      .update(courseData)
-      .eq('id', id)
+      .update(dbCourse)
+      .eq('id', courseId)
       .select()
       .single();
     
-    if (error || !data) return undefined;
+    if (error || !data) {
+      console.error('Supabase updateCourse error:', error);
+      throw new Error(`Failed to update course: ${error?.message || 'Unknown error'}`);
+    }
     return data as Course;
   }
 
-  async deleteCourse(id: string): Promise<boolean> {
+  async deleteCourse(courseId: string): Promise<boolean> {
     const { error } = await supabase
       .from('courses')
       .delete()
-      .eq('id', id);
+      .eq('id', courseId);
     
-    return !error;
-  }
-
-  async updateCourseEnrollment(id: string, increment: number): Promise<Course | undefined> {
-    // First get current enrollment
-    const { data: currentCourse, error: fetchError } = await supabase
-      .from('courses')
-      .select('enrolled')
-      .eq('id', id)
-      .single();
-    
-    if (fetchError || !currentCourse) return undefined;
-
-    // Update enrollment
-    const { data, error } = await supabase
-      .from('courses')
-      .update({ enrolled: currentCourse.enrolled + increment })
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error || !data) return undefined;
-    return data as Course;
+    if (error) {
+      console.error('Supabase deleteCourse error:', error);
+      throw new Error(`Failed to delete course: ${error.message}`);
+    }
+    return true;
   }
 
   // Banner operations
@@ -329,13 +326,13 @@ export class SupabaseStorage implements IStorage {
     const { data, error } = await supabase
       .from('banners')
       .select('*')
-      .order('display_order');
+      .order('position');
     
     if (error) throw new Error(`Failed to fetch banners: ${error.message}`);
     return data as Banner[];
   }
 
-  async getBannerById(id: number): Promise<Banner | undefined> {
+  async getBannerById(id: string): Promise<Banner | undefined> {
     const { data, error } = await supabase
       .from('banners')
       .select('*')
@@ -347,20 +344,9 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createBanner(banner: InsertBanner): Promise<Banner> {
-    // Map camelCase to snake_case for database columns
-    const dbBanner = {
-      title: banner.title,
-      subtitle: banner.subtitle || null,
-      image_url: banner.imageUrl,
-      link_url: banner.linkUrl || null,
-      link_text: banner.linkText || null,
-      is_active: banner.isActive !== undefined ? banner.isActive : true,
-      display_order: banner.displayOrder || 0
-    };
-
     const { data, error } = await supabase
       .from('banners')
-      .insert(dbBanner)
+      .insert(banner)
       .select()
       .single();
     
@@ -368,24 +354,10 @@ export class SupabaseStorage implements IStorage {
     return data as Banner;
   }
 
-  async updateBanner(id: number, banner: Partial<InsertBanner>): Promise<Banner | undefined> {
-    // Map camelCase to snake_case for database columns
-    const dbBanner: Record<string, any> = {};
-    
-    if (banner.title !== undefined) dbBanner.title = banner.title;
-    if (banner.subtitle !== undefined) dbBanner.subtitle = banner.subtitle;
-    if (banner.imageUrl !== undefined) dbBanner.image_url = banner.imageUrl;
-    if (banner.linkUrl !== undefined) dbBanner.link_url = banner.linkUrl;
-    if (banner.linkText !== undefined) dbBanner.link_text = banner.linkText;
-    if (banner.isActive !== undefined) dbBanner.is_active = banner.isActive;
-    if (banner.displayOrder !== undefined) dbBanner.display_order = banner.displayOrder;
-    
-    // Add updated_at timestamp
-    dbBanner.updated_at = new Date();
-
+  async updateBanner(id: string, banner: Partial<InsertBanner>): Promise<Banner | undefined> {
     const { data, error } = await supabase
       .from('banners')
-      .update(dbBanner)
+      .update(banner)
       .eq('id', id)
       .select()
       .single();
@@ -394,13 +366,17 @@ export class SupabaseStorage implements IStorage {
     return data as Banner;
   }
 
-  async deleteBanner(id: number): Promise<boolean> {
+  async deleteBanner(id: string): Promise<boolean> {
     const { error } = await supabase
       .from('banners')
       .delete()
       .eq('id', id);
     
-    return !error;
+    if (error) {
+      console.error('Supabase deleteBanner error:', error);
+      throw new Error(`Failed to delete banner: ${error.message}`);
+    }
+    return true;
   }
 
   // Website settings operations
@@ -413,33 +389,22 @@ export class SupabaseStorage implements IStorage {
     return data as WebsiteSetting[];
   }
 
-  async getWebsiteSettingByKey(key: string): Promise<WebsiteSetting | undefined> {
+  async getWebsiteSettingById(id: string): Promise<WebsiteSetting | undefined> {
     const { data, error } = await supabase
       .from('website_settings')
       .select('*')
-      .eq('key', key)
+      .eq('id', id)
       .single();
     
     if (error || !data) return undefined;
     return data as WebsiteSetting;
   }
 
-  async createWebsiteSetting(setting: InsertWebsiteSetting): Promise<WebsiteSetting> {
+  async updateWebsiteSetting(id: string, setting: Partial<InsertWebsiteSetting>): Promise<WebsiteSetting | undefined> {
     const { data, error } = await supabase
       .from('website_settings')
-      .insert(setting)
-      .select()
-      .single();
-    
-    if (error) throw new Error(`Failed to create website setting: ${error.message}`);
-    return data as WebsiteSetting;
-  }
-
-  async updateWebsiteSetting(key: string, value: string): Promise<WebsiteSetting | undefined> {
-    const { data, error } = await supabase
-      .from('website_settings')
-      .update({ value, updated_at: new Date() })
-      .eq('key', key)
+      .update(setting)
+      .eq('id', id)
       .select()
       .single();
     

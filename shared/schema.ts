@@ -43,7 +43,7 @@ export const courses = pgTable("courses", {
   duration: varchar("duration", { length: 50 }).notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   enrolled: integer("enrolled").notNull().default(0),
-  imageUrl: text("image_url"),
+  imageUrl: text("imageUrl"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
