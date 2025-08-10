@@ -67,8 +67,7 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  // Use your built client files instead of /public
-  const distPath = path.resolve(import.meta.dirname, "../client/dist");
+  const distPath = path.resolve(import.meta.dirname, "..", "client", "dist");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -76,11 +75,10 @@ export function serveStatic(app: Express) {
     );
   }
 
-  // Serve static assets
   app.use(express.static(distPath));
 
-  // Fallback to index.html for SPA routing
+  // SPA fallback
   app.use("*", (_req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
+    res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
