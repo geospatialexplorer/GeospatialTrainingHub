@@ -133,15 +133,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Contact message routes
   app.post("/api/contact", async (req, res) => {
     try {
-      const messageData = insertContactMessageSchema.parse(req.body);
-      const message = await storage.createContactMessage(messageData);
+      // Validate request body
+      const contactData = insertContactMessageSchema.parse(req.body);
+
+      // Save contact message to DB/storage
+      const message = await storage.createContactMessage(contactData);
+
+      // Send email notification (to admin or support)
+      await emailService.sendContactMessageNotification(message);
+
       res.status(201).json(message);
     } catch (error) {
+      console.error("Contact API error:", error);
+
       if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Invalid contact data", errors: error.errors });
-      } else {
-        res.status(500).json({ message: "Failed to send message" });
+        return res.status(400).json({ message: "Invalid contact data", errors: error.errors });
       }
+
+      res.status(500).json({ message: "Failed to send message" });
     }
   });
 
@@ -175,7 +184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch course" });
     }
   });
-  
+
   app.post("/api/courses", requireAuth, async (req, res) => {
     try {
       const courseData = insertCourseSchema.parse(req.body);
@@ -229,10 +238,17 @@ app.patch("/api/courses/:id", requireAuth, async (req, res) => {
   // Dashboard stats
   app.get("/api/dashboard/stats", requireAuth, async (req, res) => {
     try {
-      const registrationStats = await storage.getRegistrationStats();
+      const { startDate, endDate } = req.query;
+
+      // Pass ISO date strings directly to your storage function
+      const registrationStats = await storage.getRegistrationStats({
+        startDate: startDate as string,
+        endDate: endDate as string
+      });
+
       const courses = await storage.getCourses();
-      
-      // Calculate revenue (simplified)
+
+      // Calculate revenue from filtered registrations
       const totalRevenue = registrationStats.byCourse.reduce((sum, item) => {
         const course = courses.find(c => c.title === item.course);
         return sum + (course ? parseFloat(course.price) * item.count : 0);
@@ -243,13 +259,14 @@ app.patch("/api/courses/:id", requireAuth, async (req, res) => {
         thisMonthRegistrations: registrationStats.thisMonth,
         activeCourses: courses.length,
         revenue: totalRevenue,
-        completionRate: 87, // Mock data
+        completionRate: 87, // placeholder
         registrationTrends: registrationStats.byMonth,
         coursePopularity: registrationStats.byCourse
       };
-      
+
       res.json(stats);
     } catch (error) {
+      console.error(error);
       res.status(500).json({ message: "Failed to fetch dashboard stats" });
     }
   });

@@ -1,14 +1,14 @@
 import { supabase } from './supabase';
-import { 
-  users, 
-  registrations, 
-  contactMessages, 
+import {
+  users,
+  registrations,
+  contactMessages,
   courses,
   banners,
   websiteSettings,
-  type User, 
-  type InsertUser, 
-  type Registration, 
+  type User,
+  type InsertUser,
+  type Registration,
   type InsertRegistration,
   type ContactMessage,
   type InsertContactMessage,
@@ -21,44 +21,45 @@ import {
 } from "@shared/schema";
 import type { IStorage } from './storage';
 
+interface RegistrationFilters {
+  startDate?: string; // ISO date string
+  endDate?: string;   // ISO date string
+}
+
 export class SupabaseStorage implements IStorage {
-  // User operations
+  // ------------------ User operations ------------------
   async getUser(id: number): Promise<User | undefined> {
     const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
+        .from('users')
+        .select('*')
+        .eq('id', id)
+        .single();
     if (error || !data) return undefined;
     return data as User;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('username', username)
-      .single();
-    
+        .from('users')
+        .select('*')
+        .eq('username', username)
+        .single();
     if (error || !data) return undefined;
     return data as User;
   }
 
   async createUser(user: InsertUser): Promise<User> {
     const { data, error } = await supabase
-      .from('users')
-      .insert(user)
-      .select()
-      .single();
-    
+        .from('users')
+        .insert(user)
+        .select()
+        .single();
     if (error) throw new Error(`Failed to create user: ${error.message}`);
     return data as User;
   }
 
-  // Registration operations
+  // ------------------ Registration operations ------------------
   async createRegistration(registration: InsertRegistration): Promise<Registration> {
-    // Map camelCase to snake_case for database columns
     const dbRegistration = {
       first_name: registration.firstName,
       last_name: registration.lastName,
@@ -73,18 +74,13 @@ export class SupabaseStorage implements IStorage {
     };
 
     const { data, error } = await supabase
-      .from('registrations')
-      .insert(dbRegistration)
-      .select()
-      .single();
-    
+        .from('registrations')
+        .insert(dbRegistration)
+        .select()
+        .single();
     if (error) throw new Error(`Failed to create registration: ${error.message}`);
-    
-    // Update course enrollment count
-    await this.updateCourseEnrollment(registration.courseId, 1);
-    
-    // Map snake_case back to camelCase for the response
-    const mappedData = {
+
+    return {
       id: data.id,
       firstName: data.first_name,
       lastName: data.last_name,
@@ -98,99 +94,95 @@ export class SupabaseStorage implements IStorage {
       newsletter: data.newsletter,
       status: data.status,
       registrationDate: data.registration_date
-    };
-    
-    return mappedData as Registration;
+    } as Registration;
   }
 
   async getRegistrations(): Promise<Registration[]> {
     const { data, error } = await supabase
-      .from('registrations')
-      .select('*')
-      .order('registration_date', { ascending: false });
-    
+        .from('registrations')
+        .select('*')
+        .order('registration_date', { ascending: false });
     if (error) throw new Error(`Failed to fetch registrations: ${error.message}`);
     return data as Registration[];
   }
 
   async getRegistrationById(id: number): Promise<Registration | undefined> {
     const { data, error } = await supabase
-      .from('registrations')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
+        .from('registrations')
+        .select('*')
+        .eq('id', id)
+        .single();
     if (error || !data) return undefined;
     return data as Registration;
   }
 
   async updateRegistrationStatus(id: number, status: string): Promise<Registration | undefined> {
     const { data, error } = await supabase
-      .from('registrations')
-      .update({ status })
-      .eq('id', id)
-      .select()
-      .single();
-    
+        .from('registrations')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
     if (error || !data) return undefined;
     return data as Registration;
   }
 
-  async getRegistrationStats(): Promise<{
+  async getRegistrationStats(
+      filters: RegistrationFilters = {}
+  ): Promise<{
     total: number;
     thisMonth: number;
     byMonth: number[];
-    byCourse: { course: string; count: number; }[];
+    byCourse: { course: string; count: number }[];
   }> {
-    // Get total registrations
-    const { count: total, error: totalError } = await supabase
-      .from('registrations')
-      .select('*', { count: 'exact', head: true });
-    
+    const applyDateFilters = (query: any) => {
+      if (filters.startDate) query = query.gte('registration_date', filters.startDate);
+      if (filters.endDate) query = query.lte('registration_date', filters.endDate);
+      return query;
+    };
+
+    // 1️⃣ Total registrations
+    const { count: total, error: totalError } = await applyDateFilters(
+        supabase.from('registrations').select('*', { count: 'exact', head: true })
+    );
     if (totalError) throw new Error(`Failed to get total registrations: ${totalError.message}`);
 
-    // Get this month's registrations
+    // 2️⃣ This month’s registrations
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
-    
     const { count: thisMonth, error: thisMonthError } = await supabase
-      .from('registrations')
-      .select('*', { count: 'exact', head: true })
-      .gte('registration_date', startOfMonth.toISOString());
-    
+        .from('registrations')
+        .select('*', { count: 'exact', head: true })
+        .gte('registration_date', startOfMonth.toISOString());
     if (thisMonthError) throw new Error(`Failed to get this month's registrations: ${thisMonthError.message}`);
 
-    // Get registrations by month (last 12 months)
-    const byMonth = Array(12).fill(0);
+    // 3️⃣ Monthly data
     const twelveMonthsAgo = new Date();
     twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 11);
     twelveMonthsAgo.setDate(1);
     twelveMonthsAgo.setHours(0, 0, 0, 0);
 
-    const { data: monthlyData, error: monthlyError } = await supabase
-      .from('registrations')
-      .select('registration_date')
-      .gte('registration_date', twelveMonthsAgo.toISOString());
-
+    const { data: monthlyData, error: monthlyError } = await applyDateFilters(
+        supabase.from('registrations').select('registration_date')
+    ).gte('registration_date', twelveMonthsAgo.toISOString());
     if (monthlyError) throw new Error(`Failed to get monthly registrations: ${monthlyError.message}`);
 
-    // Process monthly data
+    const byMonth = Array(12).fill(0);
     monthlyData?.forEach(reg => {
       const regDate = new Date(reg.registration_date);
-      const monthDiff = (new Date().getFullYear() - regDate.getFullYear()) * 12 + 
-                       (new Date().getMonth() - regDate.getMonth());
+      const monthDiff =
+          (new Date().getFullYear() - regDate.getFullYear()) * 12 +
+          (new Date().getMonth() - regDate.getMonth());
       if (monthDiff >= 0 && monthDiff < 12) {
         byMonth[11 - monthDiff]++;
       }
     });
 
-    // Get registrations by course
-    const { data: courseData, error: courseError } = await supabase
-      .from('registrations')
-      .select('course_id')
-      .gte('registration_date', twelveMonthsAgo.toISOString());
-
+    // 4️⃣ Registrations by course
+    const { data: courseData, error: courseError } = await applyDateFilters(
+        supabase.from('registrations').select('course_id')
+    ).gte('registration_date', twelveMonthsAgo.toISOString());
     if (courseError) throw new Error(`Failed to get course registrations: ${courseError.message}`);
 
     const courseMap = new Map<string, number>();
@@ -198,17 +190,15 @@ export class SupabaseStorage implements IStorage {
       courseMap.set(reg.course_id, (courseMap.get(reg.course_id) || 0) + 1);
     });
 
-    // Get course titles
     const courseIds = Array.from(courseMap.keys());
-    const { data: courses, error: coursesError } = await supabase
-      .from('courses')
-      .select('id, title')
-      .in('id', courseIds);
-
+    const { data: courseInfo, error: coursesError } = await supabase
+        .from('courses')
+        .select('id, title')
+        .in('id', courseIds);
     if (coursesError) throw new Error(`Failed to get courses: ${coursesError.message}`);
 
     const byCourse = Array.from(courseMap.entries()).map(([courseId, count]) => {
-      const course = courses?.find(c => c.id === courseId);
+      const course = courseInfo?.find(c => c.id === courseId);
       return {
         course: course?.title || courseId,
         count
@@ -223,191 +213,167 @@ export class SupabaseStorage implements IStorage {
     };
   }
 
-  // Contact message operations
+  // ------------------ Contact message operations ------------------
   async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
     const { data, error } = await supabase
-      .from('contact_messages')
-      .insert(message)
-      .select()
-      .single();
-    
+        .from('contact_messages')
+        .insert(message)
+        .select()
+        .single();
     if (error) throw new Error(`Failed to create contact message: ${error.message}`);
     return data as ContactMessage;
   }
 
   async getContactMessages(): Promise<ContactMessage[]> {
     const { data, error } = await supabase
-      .from('contact_messages')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
+        .from('contact_messages')
+        .select('*')
+        .order('created_at', { ascending: false });
     if (error) throw new Error(`Failed to fetch contact messages: ${error.message}`);
     return data as ContactMessage[];
   }
 
-  // Course operations
+  // ------------------ Course operations ------------------
   async getCourses(): Promise<Course[]> {
     const { data, error } = await supabase
-      .from('courses')
-      .select('*')
-      .order('title');
-    
+        .from('courses')
+        .select('*')
+        .order('title');
     if (error) throw new Error(`Failed to fetch courses: ${error.message}`);
     return data as Course[];
   }
 
   async getCourseById(id: string): Promise<Course | undefined> {
     const { data, error } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
+        .from('courses')
+        .select('*')
+        .eq('id', id)
+        .single();
     if (error || !data) return undefined;
     return data as Course;
   }
 
   async createCourse(course: InsertCourse): Promise<Course> {
-    // Map camelCase to snake_case for DB
-    const dbCourse = {
-      ...course,
-      image_url: course.imageUrl,
-    };
-    delete dbCourse.imageUrl;
+    const dbCourse = { ...course, image_url: course.imageUrl };
+    delete (dbCourse as any).imageUrl;
+
     const { data, error } = await supabase
-      .from('courses')
-      .insert(dbCourse)
-      .select()
-      .single();
-    if (error || !data) {
-      console.error('Supabase createCourse error:', error);
-      throw new Error(`Failed to create course: ${error?.message || 'Unknown error'}`);
-    }
+        .from('courses')
+        .insert(dbCourse)
+        .select()
+        .single();
+    if (error || !data) throw new Error(`Failed to create course: ${error?.message || 'Unknown error'}`);
     return data as Course;
   }
 
   async updateCourse(courseId: string, course: Partial<InsertCourse>): Promise<Course | undefined> {
-    // Map camelCase to snake_case for DB
-    const dbCourse = {
+    // Map camelCase keys to snake_case DB column names
+    const dbCourse: any = {
       ...course,
-      image_url: course.imageUrl,
+      imageUrl: course.imageUrl,
+      details_url: course.detailsUrl,
     };
+
+    // Remove camelCase keys so they don’t conflict
     delete dbCourse.imageUrl;
+    delete dbCourse.detailsUrl;
 
     const { data, error } = await supabase
-      .from('courses')
-      .update(dbCourse)
-      .eq('id', courseId)
-      .select()
-      .single();
-    
-    if (error || !data) {
-      console.error('Supabase updateCourse error:', error);
-      throw new Error(`Failed to update course: ${error?.message || 'Unknown error'}`);
-    }
+        .from('courses')
+        .update(dbCourse)
+        .eq('id', courseId)
+        .select()
+        .single();
+
+    if (error || !data) throw new Error(`Failed to update course: ${error?.message || 'Unknown error'}`);
     return data as Course;
   }
 
   async deleteCourse(courseId: string): Promise<boolean> {
     const { error } = await supabase
-      .from('courses')
-      .delete()
-      .eq('id', courseId);
-    
-    if (error) {
-      console.error('Supabase deleteCourse error:', error);
-      throw new Error(`Failed to delete course: ${error.message}`);
-    }
+        .from('courses')
+        .delete()
+        .eq('id', courseId);
+    if (error) throw new Error(`Failed to delete course: ${error.message}`);
     return true;
   }
 
-  // Banner operations
+  // ------------------ Banner operations ------------------
   async getBanners(): Promise<Banner[]> {
     const { data, error } = await supabase
-      .from('banners')
-      .select('*')
-      .order('position');
-    
+        .from('banners')
+        .select('*')
+        .order('position');
     if (error) throw new Error(`Failed to fetch banners: ${error.message}`);
     return data as Banner[];
   }
 
   async getBannerById(id: string): Promise<Banner | undefined> {
     const { data, error } = await supabase
-      .from('banners')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
+        .from('banners')
+        .select('*')
+        .eq('id', id)
+        .single();
     if (error || !data) return undefined;
     return data as Banner;
   }
 
   async createBanner(banner: InsertBanner): Promise<Banner> {
     const { data, error } = await supabase
-      .from('banners')
-      .insert(banner)
-      .select()
-      .single();
-    
+        .from('banners')
+        .insert(banner)
+        .select()
+        .single();
     if (error) throw new Error(`Failed to create banner: ${error.message}`);
     return data as Banner;
   }
 
   async updateBanner(id: string, banner: Partial<InsertBanner>): Promise<Banner | undefined> {
     const { data, error } = await supabase
-      .from('banners')
-      .update(banner)
-      .eq('id', id)
-      .select()
-      .single();
-    
+        .from('banners')
+        .update(banner)
+        .eq('id', id)
+        .select()
+        .single();
     if (error || !data) return undefined;
     return data as Banner;
   }
 
   async deleteBanner(id: string): Promise<boolean> {
     const { error } = await supabase
-      .from('banners')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Supabase deleteBanner error:', error);
-      throw new Error(`Failed to delete banner: ${error.message}`);
-    }
+        .from('banners')
+        .delete()
+        .eq('id', id);
+    if (error) throw new Error(`Failed to delete banner: ${error.message}`);
     return true;
   }
 
-  // Website settings operations
+  // ------------------ Website settings operations ------------------
   async getWebsiteSettings(): Promise<WebsiteSetting[]> {
     const { data, error } = await supabase
-      .from('website_settings')
-      .select('*');
-    
+        .from('website_settings')
+        .select('*');
     if (error) throw new Error(`Failed to fetch website settings: ${error.message}`);
     return data as WebsiteSetting[];
   }
 
   async getWebsiteSettingById(id: string): Promise<WebsiteSetting | undefined> {
     const { data, error } = await supabase
-      .from('website_settings')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
+        .from('website_settings')
+        .select('*')
+        .eq('id', id)
+        .single();
     if (error || !data) return undefined;
     return data as WebsiteSetting;
   }
 
   async updateWebsiteSetting(id: string, setting: Partial<InsertWebsiteSetting>): Promise<WebsiteSetting | undefined> {
     const { data, error } = await supabase
-      .from('website_settings')
-      .update(setting)
-      .eq('id', id)
-      .select()
-      .single();
-    
+        .from('website_settings')
+        .update(setting)
+        .eq('id', id)
+        .select()
+        .single();
     if (error || !data) return undefined;
     return data as WebsiteSetting;
   }

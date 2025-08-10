@@ -44,7 +44,9 @@ export const courses = pgTable("courses", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   enrolled: integer("enrolled").notNull().default(0),
   imageUrl: text("imageUrl"),
+  detailsUrl: text("details_url").default(''),  // add this line
 });
+
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -72,7 +74,9 @@ export const insertContactMessageSchema = createInsertSchema(contactMessages).pi
   message: true,
 });
 
-export const insertCourseSchema = createInsertSchema(courses).pick({
+export const insertCourseSchema = createInsertSchema(courses).extend({
+  detailsUrl: z.string().url().optional(),
+}).pick({
   id: true,
   title: true,
   description: true,
@@ -81,7 +85,9 @@ export const insertCourseSchema = createInsertSchema(courses).pick({
   price: true,
   enrolled: true,
   imageUrl: true,
+  detailsUrl: true,   // add here
 });
+
 
 // Banner carousel schema
 export const banners = pgTable("banners", {

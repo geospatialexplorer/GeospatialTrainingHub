@@ -42,9 +42,21 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, Plus } from "lucide-react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
 
-type CourseFormValues = z.infer<typeof insertCourseSchema>;
+type CourseFormValues = z.infer<typeof insertCourseSchema> & {
+  detailsUrl?: string;
+};
 
 export default function CoursesManagement() {
   const { toast } = useToast();
@@ -67,6 +79,7 @@ export default function CoursesManagement() {
       price: "",
       enrolled: 0,
       imageUrl: "",
+      detailsUrl: "",
     },
   });
 
@@ -95,10 +108,10 @@ export default function CoursesManagement() {
 
   const updateCourseMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<CourseFormValues> }) => {
-      // Transform imageUrl to image_url for the API
       const transformedData = {
         ...data,
-        imageUrl: data.imageUrl // Keep imageUrl for the API which will map it correctly
+        imageUrl: data.imageUrl,
+        detailsUrl: data.detailsUrl,
       };
       return apiRequest("PATCH", `/api/courses/${id}`, transformedData);
     },
@@ -110,6 +123,7 @@ export default function CoursesManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       setEditingCourse(null);
+      setIsAddDialogOpen(false);
     },
     onError: () => {
       toast({
@@ -142,12 +156,10 @@ export default function CoursesManagement() {
   });
 
   const onSubmit = (data: CourseFormValues) => {
-    // Ensure price is always a string
     const fixedData = { ...data, price: String(data.price) };
     if (editingCourse) {
       updateCourseMutation.mutate({ id: editingCourse.id, data: fixedData });
     } else {
-      // Auto-generate unique ID if not provided
       const id = data.id?.trim() ? data.id : generateCourseId(data.title);
       createCourseMutation.mutate({ ...fixedData, id });
     }
@@ -155,6 +167,7 @@ export default function CoursesManagement() {
 
   const handleEdit = (course: Course) => {
     setEditingCourse(course);
+    setIsAddDialogOpen(true);
     form.reset({
       id: course.id,
       title: course.title,
@@ -164,6 +177,7 @@ export default function CoursesManagement() {
       price: course.price,
       enrolled: course.enrolled,
       imageUrl: course.imageUrl || "",
+      detailsUrl: (course as any).detailsUrl || "",
     });
   };
 
@@ -182,6 +196,7 @@ export default function CoursesManagement() {
       price: "",
       enrolled: 0,
       imageUrl: "",
+      detailsUrl: "",
     });
     setIsAddDialogOpen(true);
   };
@@ -191,106 +206,117 @@ export default function CoursesManagement() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Course Management</h2>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={handleAddNew}>
-              <Plus className="h-4 w-4 mr-2" /> Add New Course
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add New Course</DialogTitle>
-            </DialogHeader>
-            <CourseForm form={form} onSubmit={onSubmit} />
-          </DialogContent>
-        </Dialog>
-      </div>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Course Management</h2>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={handleAddNew}>
+                <Plus className="h-4 w-4 mr-2" /> Add New Course
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingCourse ? "Edit Course" : "Add New Course"}</DialogTitle>
+              </DialogHeader>
+              <CourseForm form={form} onSubmit={onSubmit} isEditing={!!editingCourse} />
+            </DialogContent>
+          </Dialog>
+        </div>
 
-      <div className="bg-white rounded-md shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Level</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Enrolled</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {courses?.length === 0 ? (
+        <div className="bg-white rounded-md shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
-                    No courses found. Add your first course to get started.
-                  </TableCell>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Level</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Enrolled</TableHead>
+                  <TableHead>Details</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : (
-                courses?.map((course) => (
-                  <TableRow key={course.id}>
-                    <TableCell className="font-mono text-xs">{course.id}</TableCell>
-                    <TableCell className="font-medium">{course.title}</TableCell>
-                    <TableCell>{course.level}</TableCell>
-                    <TableCell>{course.duration}</TableCell>
-                    <TableCell>₹{course.price}</TableCell>
-                    <TableCell>{course.enrolled}</TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(course)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Edit Course</DialogTitle>
-                          </DialogHeader>
-                          <CourseForm form={form} onSubmit={onSubmit} isEditing />
-                        </DialogContent>
-                      </Dialog>
+              </TableHeader>
+              <TableBody>
+                {courses?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
+                        No courses found. Add your first course to get started.
+                      </TableCell>
+                    </TableRow>
+                ) : (
+                    courses?.map((course) => (
+                        <TableRow key={course.id}>
+                          <TableCell className="font-mono text-xs">{course.id}</TableCell>
+                          <TableCell className="font-medium">{course.title}</TableCell>
+                          <TableCell>{course.level}</TableCell>
+                          <TableCell>{course.duration}</TableCell>
+                          <TableCell>₹{course.price}</TableCell>
+                          <TableCell>{course.enrolled}</TableCell>
+                          <TableCell>
+                            {(course as any).detailsUrl ? (
+                                <a
+                                    href={(course as any).detailsUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline"
+                                >
+                                  View Details
+                                </a>
+                            ) : (
+                                <span className="text-muted-foreground">No details</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right space-x-2">
+                            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={() => handleEdit(course)}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle>Edit Course</DialogTitle>
+                                </DialogHeader>
+                                <CourseForm form={form} onSubmit={onSubmit} isEditing />
+                              </DialogContent>
+                            </Dialog>
 
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Course</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete this course? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(course.id)}
-                              className="bg-red-500 hover:bg-red-600"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Course</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete this course? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                      onClick={() => handleDelete(course.id)}
+                                      className="bg-red-500 hover:bg-red-600"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </TableCell>
+                        </TableRow>
+                    ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
-    </div>
   );
 }
 
@@ -302,171 +328,182 @@ interface CourseFormProps {
 
 function CourseForm({ form, onSubmit, isEditing = false }: CourseFormProps) {
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Course ID *</FormLabel>
-                <FormControl>
-                  <Input 
-                    {...field} 
-                    placeholder="e.g., gis-fundamentals" 
-                    disabled={isEditing}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Title *</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Course title" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+                control={form.control}
+                name="id"
+                render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Course ID *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="e.g., gis-fundamentals" disabled={isEditing} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Course title" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}
+            />
+          </div>
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description *</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="Course description"
-                  className="min-h-[100px]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-2 gap-4">
           <FormField
-            control={form.control}
-            name="level"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Level *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select level" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Beginner">Beginner</SelectItem>
-                    <SelectItem value="Intermediate">Intermediate</SelectItem>
-                    <SelectItem value="Advanced">Advanced</SelectItem>
-                    <SelectItem value="Specialized">Specialized</SelectItem>
-                    <SelectItem value="Professional">Professional</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description *</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} placeholder="Course description" className="min-h-[100px]" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+              )}
           />
-          <FormField
-            control={form.control}
-            name="duration"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Duration *</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="e.g., 40 hours" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Price *</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="e.g., 299.00" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="enrolled"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Enrolled Students</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    {...field} 
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                    value={field.value}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+                control={form.control}
+                name="level"
+                render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Level *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select level" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Beginner">Beginner</SelectItem>
+                          <SelectItem value="Intermediate">Intermediate</SelectItem>
+                          <SelectItem value="Advanced">Advanced</SelectItem>
+                          <SelectItem value="Specialized">Specialized</SelectItem>
+                          <SelectItem value="Professional">Professional</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="duration"
+                render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="e.g., 40 hours" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}
+            />
+          </div>
 
-        <FormField
-          control={form.control}
-          name="imageUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Image URL</FormLabel>
-              <FormControl>
-                <div className="space-y-2">
-                  <Input {...field} placeholder="URL to course image" />
-                  {field.value && (
-                    <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-gray-200">
-                      <img
-                        src={field.value}
-                        alt="Course preview"
-                        className="object-cover w-full h-full"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder-image.jpg';
-                          e.currentTarget.alt = 'Failed to load image';
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="e.g., 299.00" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="enrolled"
+                render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Seat Availability *</FormLabel>
+                      <FormControl>
+                        <Input
+                            type="number"
+                            min={0}
+                            {...field}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              field.onChange(val === "" ? "" : Math.max(0, Number(val)));
+                            }}
+                            value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}
+            />
+          </div>
+          <FormField
+              control={form.control}
+              name="detailsUrl"
+              render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Course Details URL</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Link to course details (e.g., Google Doc, Drive)" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+              )}
+          />
 
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
-          </DialogClose>
-          <Button type="submit">{isEditing ? "Update" : "Create"} Course</Button>
-        </DialogFooter>
-      </form>
-    </Form>
+          <FormField
+              control={form.control}
+              name="imageUrl"
+              render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Image URL</FormLabel>
+                    <FormControl>
+                      <div className="space-y-2">
+                        <Input {...field} placeholder="URL to course image" />
+                        {field.value && (
+                            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-gray-200">
+                              <img
+                                  src={field.value}
+                                  alt="Course preview"
+                                  className="object-cover w-full h-full"
+                                  onError={(e) => {
+                                    e.currentTarget.src = "/placeholder-image.jpg";
+                                    e.currentTarget.alt = "Failed to load image";
+                                  }}
+                              />
+                            </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+              )}
+          />
+
+
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button type="submit">{isEditing ? "Update" : "Create"} Course</Button>
+          </DialogFooter>
+        </form>
+      </Form>
   );
 }
