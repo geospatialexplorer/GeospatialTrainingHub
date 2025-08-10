@@ -162,7 +162,7 @@ export default function ContactSection() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <h4 className="font-semibold text-slate-900 mb-1 text-sm sm:text-base">Office Address</h4>
-                    <p className="text-slate-600 text-sm sm:text-base">123 GeoSpatial Way<br />Tech District, CA 94105<br />United States</p>
+                    <p className="text-slate-600 text-sm sm:text-base">Tirunelveli, Tamilnadu - 627351</p>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -171,7 +171,7 @@ export default function ContactSection() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <h4 className="font-semibold text-slate-900 mb-1 text-sm sm:text-base">Phone Number</h4>
-                    <p className="text-slate-600 text-sm sm:text-base">+1 (555) 123-4567</p>
+                    <p className="text-slate-600 text-sm sm:text-base">+91 99867 88946</p>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -180,7 +180,7 @@ export default function ContactSection() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <h4 className="font-semibold text-slate-900 mb-1 text-sm sm:text-base">Email Address</h4>
-                    <p className="text-slate-600 text-sm sm:text-base break-all">info@geospatialacademy.com</p>
+                    <p className="text-slate-600 text-sm sm:text-base break-all">fusionxpatial@gmail.com</p>
                   </div>
                 </div>
                 <div className="flex items-start">

@@ -48,7 +48,7 @@ export default function StatsCards({ stats, loading }: StatsCardsProps) {
     },
     {
       title: "Monthly Revenue",
-      value: `$${stats.revenue.toLocaleString()}`,
+      value: `$${(stats.revenue ?? 0).toLocaleString()}`,
       change: "+8% from last month",
       icon: DollarSign,
       bgColor: "bg-amber-100",

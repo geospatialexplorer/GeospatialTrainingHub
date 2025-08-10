@@ -53,7 +53,7 @@ export default function CourseCard({ course, onEnroll }: CourseCardProps) {
             </div>
             <div className="flex items-center">
               <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
-              <span>{course.enrolled} enrolled</span>
+              <span>{course.enrolled} seats available</span>
             </div>
           </div>
 

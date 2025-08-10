@@ -166,7 +166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course routes
   app.get("/api/courses", async (req, res) => {
     try {
-      const courses = await storage.getCourses();
+      const courses = await storage.getCourses({ is_active: true });
       res.json(courses);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch courses" });
@@ -188,18 +188,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/courses", requireAuth, async (req, res) => {
     try {
       const courseData = insertCourseSchema.parse(req.body);
-      const course = await storage.createCourse(courseData);
+
+      // Map camelCase to DB column names if needed
+      const dbCourseData = {
+        id: courseData.id,
+        title: courseData.title,
+        description: courseData.description,
+        level: courseData.level,
+        duration: courseData.duration,
+        price: courseData.price,
+        enrolled: courseData.enrolled,
+        imageUrl: courseData.imageUrl ?? null,
+        details_url: courseData.detailsUrl ?? '',
+      };
+
+      const course = await storage.createCourse(dbCourseData);
       res.status(201).json(course);
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid course data", errors: error.errors });
       } else {
+        console.error(error);
         res.status(500).json({ message: "Failed to create course" });
       }
     }
   });
 
-app.patch("/api/courses/:id", requireAuth, async (req, res) => {
+
+  app.patch("/api/courses/:id", requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
     const { id: _remove, ...updateData } = req.body; // remove id from payload
@@ -223,34 +239,51 @@ app.patch("/api/courses/:id", requireAuth, async (req, res) => {
   app.delete("/api/courses/:id", requireAuth, async (req, res) => {
     try {
       const id = req.params.id;
-      const success = await storage.deleteCourse(id);
-      
+      const success = await storage.deleteCourse(id);  // Use your storage's deleteCourse here
+
       if (!success) {
-        return res.status(404).json({ message: "Course not found" });
+        return res.status(404).json({ message: "Course not found or could not be deleted" });
       }
-      
-      res.json({ message: "Course deleted successfully" });
+
+      res.json({ message: "Course soft deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete course" });
     }
   });
 
+
+
+
   // Dashboard stats
   app.get("/api/dashboard/stats", requireAuth, async (req, res) => {
     try {
-      const { startDate, endDate } = req.query;
+      // Parse startDate and endDate from query params
+      let startDate: Date | undefined;
+      let endDate: Date | undefined;
 
-      // Pass ISO date strings directly to your storage function
+      if (req.query.startDate) {
+        startDate = new Date(req.query.startDate as string);
+      }
+      if (req.query.endDate) {
+        endDate = new Date(req.query.endDate as string);
+        // Set endDate to the end of that day to be inclusive
+        endDate.setHours(23, 59, 59, 999);
+      } else {
+        // If no endDate specified, default to now
+        endDate = new Date();
+      }
+
+      // Convert dates to ISO strings for your storage
       const registrationStats = await storage.getRegistrationStats({
-        startDate: startDate as string,
-        endDate: endDate as string
+        startDate: startDate ? startDate.toISOString() : undefined,
+        endDate: endDate.toISOString(),
       });
 
       const courses = await storage.getCourses();
 
       // Calculate revenue from filtered registrations
       const totalRevenue = registrationStats.byCourse.reduce((sum, item) => {
-        const course = courses.find(c => c.title === item.course);
+        const course = courses.find((c) => c.title === item.course);
         return sum + (course ? parseFloat(course.price) * item.count : 0);
       }, 0);
 
@@ -261,7 +294,7 @@ app.patch("/api/courses/:id", requireAuth, async (req, res) => {
         revenue: totalRevenue,
         completionRate: 87, // placeholder
         registrationTrends: registrationStats.byMonth,
-        coursePopularity: registrationStats.byCourse
+        coursePopularity: registrationStats.byCourse,
       };
 
       res.json(stats);

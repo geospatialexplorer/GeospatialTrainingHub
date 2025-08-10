@@ -74,19 +74,27 @@ export const insertContactMessageSchema = createInsertSchema(contactMessages).pi
   message: true,
 });
 
-export const insertCourseSchema = createInsertSchema(courses).extend({
-  detailsUrl: z.string().url().optional(),
-}).pick({
-  id: true,
-  title: true,
-  description: true,
-  level: true,
-  duration: true,
-  price: true,
-  enrolled: true,
-  imageUrl: true,
-  detailsUrl: true,   // add here
-});
+export const insertCourseSchema = createInsertSchema(courses)
+    .extend({
+      detailsUrl: z.string().url().optional(),
+      price: z.preprocess((val) => {
+        if (typeof val === "string") return parseFloat(val);
+        if (typeof val === "number") return val;
+        return 0; // or throw error if you want
+      }, z.number()),
+    })
+    .pick({
+      id: true,
+      title: true,
+      description: true,
+      level: true,
+      duration: true,
+      price: true,
+      enrolled: true,
+      imageUrl: true,
+      detailsUrl: true,
+    });
+
 
 
 // Banner carousel schema

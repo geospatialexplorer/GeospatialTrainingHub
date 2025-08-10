@@ -128,7 +128,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getRegistrationStats(
-      filters: RegistrationFilters = {}
+      filters: { startDate?: string; endDate?: string } = {}
   ): Promise<{
     total: number;
     thisMonth: number;
@@ -141,13 +141,13 @@ export class SupabaseStorage implements IStorage {
       return query;
     };
 
-    // 1️⃣ Total registrations
+    // 1️⃣ Total registrations with filters
     const { count: total, error: totalError } = await applyDateFilters(
         supabase.from('registrations').select('*', { count: 'exact', head: true })
     );
     if (totalError) throw new Error(`Failed to get total registrations: ${totalError.message}`);
 
-    // 2️⃣ This month’s registrations
+    // 2️⃣ This month’s registrations (filtered by start of this month to now)
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
@@ -157,7 +157,7 @@ export class SupabaseStorage implements IStorage {
         .gte('registration_date', startOfMonth.toISOString());
     if (thisMonthError) throw new Error(`Failed to get this month's registrations: ${thisMonthError.message}`);
 
-    // 3️⃣ Monthly data
+    // 3️⃣ Monthly data - last 12 months (ignore filters here or apply startDate if you want)
     const twelveMonthsAgo = new Date();
     twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 11);
     twelveMonthsAgo.setDate(1);
@@ -169,11 +169,11 @@ export class SupabaseStorage implements IStorage {
     if (monthlyError) throw new Error(`Failed to get monthly registrations: ${monthlyError.message}`);
 
     const byMonth = Array(12).fill(0);
-    monthlyData?.forEach(reg => {
+    monthlyData?.forEach((reg) => {
       const regDate = new Date(reg.registration_date);
       const monthDiff =
-          (new Date().getFullYear() - regDate.getFullYear()) * 12 +
-          (new Date().getMonth() - regDate.getMonth());
+          new Date().getFullYear() * 12 + new Date().getMonth() -
+          (regDate.getFullYear() * 12 + regDate.getMonth());
       if (monthDiff >= 0 && monthDiff < 12) {
         byMonth[11 - monthDiff]++;
       }
@@ -186,7 +186,7 @@ export class SupabaseStorage implements IStorage {
     if (courseError) throw new Error(`Failed to get course registrations: ${courseError.message}`);
 
     const courseMap = new Map<string, number>();
-    courseData?.forEach(reg => {
+    courseData?.forEach((reg) => {
       courseMap.set(reg.course_id, (courseMap.get(reg.course_id) || 0) + 1);
     });
 
@@ -198,10 +198,10 @@ export class SupabaseStorage implements IStorage {
     if (coursesError) throw new Error(`Failed to get courses: ${coursesError.message}`);
 
     const byCourse = Array.from(courseMap.entries()).map(([courseId, count]) => {
-      const course = courseInfo?.find(c => c.id === courseId);
+      const course = courseInfo?.find((c) => c.id === courseId);
       return {
         course: course?.title || courseId,
-        count
+        count,
       };
     });
 
@@ -209,9 +209,11 @@ export class SupabaseStorage implements IStorage {
       total: total || 0,
       thisMonth: thisMonth || 0,
       byMonth,
-      byCourse
+      byCourse,
     };
   }
+
+
 
   // ------------------ Contact message operations ------------------
   async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
@@ -234,14 +236,16 @@ export class SupabaseStorage implements IStorage {
   }
 
   // ------------------ Course operations ------------------
-  async getCourses(): Promise<Course[]> {
-    const { data, error } = await supabase
-        .from('courses')
-        .select('*')
-        .order('title');
+  async getCourses(filter?: { is_active?: boolean }): Promise<Course[]> {
+    let query = supabase.from('courses').select('*').order('title');
+    if (filter?.is_active !== undefined) {
+      query = query.eq('is_active', filter.is_active);
+    }
+    const { data, error } = await query;
     if (error) throw new Error(`Failed to fetch courses: ${error.message}`);
     return data as Course[];
   }
+
 
   async getCourseById(id: string): Promise<Course | undefined> {
     const { data, error } = await supabase
@@ -292,11 +296,14 @@ export class SupabaseStorage implements IStorage {
   async deleteCourse(courseId: string): Promise<boolean> {
     const { error } = await supabase
         .from('courses')
-        .delete()
+        .update({ is_active: false })
         .eq('id', courseId);
-    if (error) throw new Error(`Failed to delete course: ${error.message}`);
-    return true;
+
+    return !error;
   }
+
+
+
 
   // ------------------ Banner operations ------------------
   async getBanners(): Promise<Banner[]> {
